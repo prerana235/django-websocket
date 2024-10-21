@@ -1,0 +1,76 @@
+<html>
+    <head>
+        <title>Lobby</title>
+    </head>
+    <body>
+        <h1>Let's Chat!</h1>
+        
+        <!-- Form for sending messages -->
+        <form id="form">
+            <input type="text" name="message" placeholder="Type a message..." />
+            <button type="submit">Send</button>
+        </form>
+        
+        <!-- Div where messages will be displayed -->
+        <div id="message-container" style="border: 1px solid black; padding: 10px; margin-top: 20px; height: 300px; overflow-y: auto;">
+            <!-- Messages will appear here -->
+        </div>
+
+        <script type="text/javascript">
+            let url = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/socket-server/`;
+
+            const chatSocket = new WebSocket(url);
+
+            chatSocket.onopen = function(e) {
+                console.log("WebSocket connection established.");
+            }
+
+            chatSocket.onclose = function(e) {
+                console.log("WebSocket connection closed.");
+            }
+
+            chatSocket.onerror = function(e) {
+                console.error("WebSocket error observed:", e);
+            }
+
+            chatSocket.onmessage = function(e) {
+                let data = JSON.parse(e.data);
+                console.log('Data:', data);
+
+                // Get the message from the received data and display it
+                if (data.message) {
+                    displayMessage(data.message);
+                }
+            }
+
+            let form = document.getElementById('form');
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                let message = e.target.message.value;
+
+                if (message.trim()) {  // Prevent sending empty messages
+                    chatSocket.send(JSON.stringify({
+                        'message': message
+                    }));
+                }
+
+                form.reset();  // Clear the input after sending the message
+            });
+
+            // Function to display the message in the message container
+            function displayMessage(message) {
+                let messageContainer = document.getElementById('message-container');
+                
+                // Create a new paragraph element for the message
+                let messageElement = document.createElement('p');
+                messageElement.textContent = message;
+
+                // Append the message to the container
+                messageContainer.appendChild(messageElement);
+
+                // Scroll the message container to the bottom to show the latest message
+                messageContainer.scrollTop = messageContainer.scrollHeight;
+            }
+        </script>
+    </body>
+</html>
